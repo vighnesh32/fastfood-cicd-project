@@ -99,13 +99,18 @@ pipeline {
                         echo '🛑 Force killing any process on port 3000...'
                         sudo fuser -k 3000/tcp || true
                         sudo killall -9 node || true
-                        sleep 3
+                        pm2 kill || true
                         
-                        # Stop existing PM2 process if running
-                        echo '🛑 Stopping existing PM2 application...'
-                        pm2 stop ${APP_NAME} || true
-                        pm2 delete ${APP_NAME} || true
-                        sleep 2
+                        # Wait for port to be completely free
+                        echo '⏳ Waiting for port 3000 to be released...'
+                        for i in {1..10}; do
+                            if ! sudo lsof -ti:3000 > /dev/null 2>&1; then
+                                echo "✅ Port 3000 is free!"
+                                break
+                            fi
+                            echo "⏳ Attempt \$i/10: Port still in use, waiting..."
+                            sleep 2
+                        done
                         
                         # Start application with PM2 in fork mode
                         echo '▶️ Starting application with PM2...'
