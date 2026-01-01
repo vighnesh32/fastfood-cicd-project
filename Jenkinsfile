@@ -95,8 +95,13 @@ pipeline {
                         echo '📦 Installing production dependencies...'
                         npm install --production
                         
+                        # Force kill any process using port 3000
+                        echo '🛑 Force killing any process on port 3000...'
+                        sudo lsof -ti:3000 | xargs -r sudo kill -9 || true
+                        sleep 2
+                        
                         # Stop existing PM2 process if running
-                        echo '🛑 Stopping existing application...'
+                        echo '🛑 Stopping existing PM2 application...'
                         pm2 stop ${APP_NAME} || true
                         pm2 delete ${APP_NAME} || true
                         sleep 2
