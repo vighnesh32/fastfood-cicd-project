@@ -3,9 +3,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
 // Middleware
 app.use(express.json());
 app.use(express.static(__dirname));
+
 
 // Menu data - Our fast food items
 const menuItems = [
@@ -139,15 +141,18 @@ const menuItems = [
     }
 ];
 
+
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+
 // API endpoint to get menu
 app.get('/api/menu', (req, res) => {
     res.json(menuItems);
 });
+
 
 // API endpoint to place order
 app.post('/api/order', (req, res) => {
@@ -176,6 +181,7 @@ app.post('/api/order', (req, res) => {
     });
 });
 
+
 // Health check endpoint (for deployment verification)
 app.get('/health', (req, res) => {
     res.json({ 
@@ -187,14 +193,16 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Start server
+
+// Start server - BIND TO 0.0.0.0 FOR EXTERNAL ACCESS
 app.listen(PORT, '0.0.0.0', () => {
     console.log('🍔 ================================');
     console.log('🍕 Fast Food Ordering App Started!');
     console.log('🍟 ================================');
-    console.log(`🌐 Server: http://localhost:${PORT}`);
-    console.log(`💚 Health: http://localhost:${PORT}/health`);
+    console.log(`🌐 Server: http://0.0.0.0:${PORT}`);
+    console.log(`💚 Health: http://0.0.0.0:${PORT}/health`);
     console.log(`📋 Menu items loaded: ${menuItems.length}`);
     console.log('🚀 Ready to accept orders!');
+    console.log('🎯 Accepting connections from all interfaces');
     console.log('================================\n');
 });
