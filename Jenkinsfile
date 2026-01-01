@@ -37,7 +37,8 @@ pipeline {
         
         stage('Run Tests') {
             steps {
-                echo '🧪 ===== STAGE 3: RUN TESTS ====='
+                echo '🧪 ===== STAGE 3: RUN TESTS =====
+'
                 echo '🔍 Running application tests...'
                 sh 'npm test'
                 echo '✅ All tests passed!'
@@ -95,53 +96,67 @@ pipeline {
                         echo '📦 Installing production dependencies...'
                         npm install --production
                         
-                        # NUCLEAR OPTION - Kill EVERYTHING on port 3000
-                        echo '💣 NUCLEAR KILL: Stopping ALL processes on port 3000...'
+                        # ABSOLUTE NUCLEAR KILL - Kill as root to bypass user permissions
+                        echo '💣 ABSOLUTE NUCLEAR KILL: Destroying ALL port 3000 processes...'
                         
-                        # Method 1: PM2 complete shutdown
-                        pm2 kill || true
+                        # Kill PM2 completely
+                        sudo -u jenkins pm2 kill 2>/dev/null || true
+                        sudo -u ubuntu pm2 kill 2>/dev/null || true
+                        sudo pm2 kill 2>/dev/null || true
                         sleep 2
                         
-                        # Method 2: Kill by port (multiple attempts)
-                        for attempt in {1..3}; do
-                            echo "🔫 Kill attempt \$attempt/3..."
-                            sudo fuser -k -9 3000/tcp || true
-                            sudo lsof -ti:3000 | xargs -r sudo kill -9 || true
+                        # Multiple aggressive kill attempts
+                        for attempt in 1 2 3 4 5; do
+                            echo "🔫 Kill attempt \$attempt/5..."
+                            
+                            # Method 1: fuser with force
+                            sudo fuser -k -9 3000/tcp 2>/dev/null || true
+                            
+                            # Method 2: lsof and kill
+                            sudo lsof -ti:3000 | xargs -r sudo kill -9 2>/dev/null || true
+                            
+                            # Method 3: Kill by process name for all users
+                            sudo pkill -9 -f "node.*server.js" 2>/dev/null || true
+                            sudo pkill -9 -f "pm2" 2>/dev/null || true
+                            
+                            # Method 4: Kill all node processes system-wide
+                            sudo killall -9 node 2>/dev/null || true
+                            
+                            # Method 5: Kill specific PIDs found on port 3000
+                            for pid in \$(sudo lsof -ti:3000 2>/dev/null); do
+                                echo "Killing PID \$pid..."
+                                sudo kill -9 \$pid 2>/dev/null || true
+                            done
+                            
                             sleep 2
-                        done
-                        
-                        # Method 3: Find and kill all node processes with server.js
-                        sudo pkill -9 -f "node.*server.js" || true
-                        sudo pkill -9 -f "pm2" || true
-                        sleep 2
-                        
-                        # Method 4: Kill ALL node processes (nuclear!)
-                        sudo killall -9 node || true
-                        sleep 3
-                        
-                        # Verify port is free
-                        echo '🔍 Verifying port 3000 is completely free...'
-                        for i in {1..15}; do
-                            if ! sudo lsof -ti:3000 > /dev/null 2>&1 && ! sudo netstat -tuln | grep -q ":3000 "; then
-                                echo "✅ Port 3000 is 100% FREE!"
+                            
+                            # Check if port is free
+                            if ! sudo lsof -ti:3000 >/dev/null 2>&1; then
+                                echo "✅ Port 3000 is FREE after attempt \$attempt!"
                                 break
                             fi
-                            echo "⏳ Attempt \$i/15: Port still occupied, waiting..."
-                            sudo fuser -k -9 3000/tcp || true
-                            sleep 2
+                            
+                            echo "⏳ Port still occupied, retrying..."
                         done
                         
-                        # Final check
-                        if sudo lsof -ti:3000 > /dev/null 2>&1; then
-                            echo "❌ CRITICAL: Port 3000 still in use after all kill attempts!"
+                        # Final verification
+                        echo '🔍 Final port verification...'
+                        sleep 3
+                        
+                        if sudo lsof -ti:3000 >/dev/null 2>&1; then
+                            echo "❌ CRITICAL ERROR: Port 3000 still occupied!"
+                            echo "Processes on port 3000:"
                             sudo lsof -i:3000
-                            sudo netstat -tuln | grep :3000
+                            sudo netstat -tulnp | grep :3000
+                            echo "All node processes:"
+                            ps aux | grep node
                             exit 1
                         fi
                         
-                        echo '🎯 Port 3000 is confirmed FREE - Starting application...'
+                        echo '✅ Port 3000 is 100% FREE - Ready to deploy!'
                         
-                        # Start fresh PM2 daemon and application
+                        # Start application with PM2
+                        echo '▶️ Starting application with PM2...'
                         pm2 start server.js \\
                             --name ${APP_NAME} \\
                             --time \\
