@@ -37,8 +37,7 @@ pipeline {
         
         stage('Run Tests') {
             steps {
-                echo '🧪 ===== STAGE 3: RUN TESTS =====
-'
+                echo '🧪 ===== STAGE 3: RUN TESTS ====='
                 echo '🔍 Running application tests...'
                 sh 'npm test'
                 echo '✅ All tests passed!'
