@@ -97,8 +97,9 @@ pipeline {
                         
                         # Force kill any process using port 3000
                         echo '🛑 Force killing any process on port 3000...'
-                        sudo lsof -ti:3000 | xargs -r sudo kill -9 || true
-                        sleep 2
+                        sudo fuser -k 3000/tcp || true
+                        sudo killall -9 node || true
+                        sleep 3
                         
                         # Stop existing PM2 process if running
                         echo '🛑 Stopping existing PM2 application...'
