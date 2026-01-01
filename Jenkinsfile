@@ -107,12 +107,11 @@ pipeline {
                         pm2 delete ${APP_NAME} || true
                         sleep 2
                         
-                        # Start application with PM2
+                        # Start application with PM2 in fork mode
                         echo '▶️ Starting application with PM2...'
                         pm2 start server.js \\
                             --name ${APP_NAME} \\
                             --time \\
-                            --instances 1 \\
                             --max-memory-restart 500M \\
                             --log /var/log/fastfood-app.log \\
                             --error /var/log/fastfood-app.log \\
