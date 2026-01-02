@@ -3,7 +3,7 @@ set -e
 
 echo "▶️ ===== STARTING APPLICATION ====="
 
-# Navigate to application directory (update if your folder name changes)
+# Navigate to application directory
 cd /home/ubuntu/fastfood-app
 
 # Install production dependencies
@@ -14,27 +14,22 @@ npm install --production
 export NODE_ENV=production
 export PORT=3000
 
-# Start application with PM2
+# Kill any existing PM2 processes
+echo "🛑 Stopping existing PM2 processes..."
+pm2 delete all || true
+
+# Start application with PM2 in FORK mode (not cluster)
 echo "🚀 Starting Fast Food App with PM2..."
 pm2 start server.js \
     --name fastfood-app \
-    --time \
-    --instances 1 \
-    --max-memory-restart 500M \
-    --log /var/log/fastfood-app.log \
-    --error /var/log/fastfood-app-error.log
+    --time
 
 # Save PM2 configuration
 pm2 save
 
-# Setup PM2 to start on system boot (user = ubuntu, home = /home/ubuntu)
-echo "⚙️ Configuring PM2 startup..."
-sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu
-
 # Display PM2 status
 echo "📊 Application Status:"
 pm2 list
-pm2 info fastfood-app
 
 echo "✅ Application started successfully!"
-echo "🌐 Access at: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
+echo "🌐 Access at: http://44.199.191.251:3000"
