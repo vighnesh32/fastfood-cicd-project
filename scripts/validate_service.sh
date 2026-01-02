@@ -16,7 +16,16 @@ if echo "$PM2_LIST" | grep -q '"name":"fastfood-app"'; then
     if echo "$PM2_LIST" | grep '"name":"fastfood-app"' | grep -q '"status":"online"'; then
         echo "✅ Application status: ONLINE"
         echo "🎉 Deployment successful!"
-        echo "🌐 Application URL: http://44.199.191.251:3000"
+        
+        # Get public IP dynamically from EC2 metadata
+        PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+        
+        if [ "$PUBLIC_IP" != "localhost" ]; then
+            echo "🌐 Application URL: http://$PUBLIC_IP:3000"
+        else
+            echo "🌐 Application URL: http://localhost:3000"
+        fi
+        
         pm2 list
         exit 0
     else
