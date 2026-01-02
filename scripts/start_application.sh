@@ -4,7 +4,7 @@ set -e
 echo "▶️ ===== STARTING APPLICATION ====="
 
 # Navigate to application directory (update if your folder name changes)
-cd /home/ubuntu/fastfood-cicd-project
+cd /home/ubuntu/fastfood-app
 
 # Install production dependencies
 echo "📦 Installing production dependencies..."
